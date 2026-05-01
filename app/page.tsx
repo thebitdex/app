@@ -34,18 +34,17 @@ export default function Home() {
       );
     }
 
+    const injectedConnector = connectors.find(c => c.id === 'injected' || c.type === 'injected');
+    const fallbackConnector = injectedConnector ?? connectors[0];
+    if (!fallbackConnector) return null;
+
     return (
-      <div style={{ display: 'flex', gap: '8px' }}>
-        {connectors.map((connector) => (
-          <button 
-            key={connector.uid} 
-            onClick={() => connect({ connector })} 
-            style={connectButtonStyle}
-          >
-            {connector.name === 'Injected' ? 'Connect Wallet' : connector.name}
-          </button>
-        ))}
-      </div>
+      <button
+        onClick={() => connect({ connector: fallbackConnector })}
+        style={connectButtonStyle}
+      >
+        <Wallet size={18} /> Connect Wallet
+      </button>
     );
   };
 
@@ -466,8 +465,8 @@ const mainContainerStyle = { maxWidth: '1200px', margin: '0 auto', padding: '40p
 const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' } as const;
 const logoIconStyle = { background: '#ff9900', color: 'white', padding: '10px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(255,153,0,0.2)' } as const;
 const priceBadgeStyle = { background: '#fff7ed', border: '1px solid #ffedd5', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '8px' } as const;
-const walletButtonStyle = { background: '#fff', border: '1px solid #e4e4e7', padding: '10px 18px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' } as const;
-const connectButtonStyle = { background: 'black', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '600' } as const;
+const walletButtonStyle = { background: '#fff', border: '1px solid #e4e4e7', padding: '10px 18px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', color: 'black', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' } as const;
+const connectButtonStyle = { background: 'black', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '8px' } as const;
 
 const contentGridStyle = { display: 'grid', gridTemplateColumns: '400px 1fr', gap: '40px', flex: 1 } as const;
 const leftColStyle = { display: 'flex', flexDirection: 'column', gap: '24px' } as const;
