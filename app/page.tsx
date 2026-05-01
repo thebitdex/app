@@ -387,16 +387,16 @@ export default function Home() {
         <div style={rightColStyle}>
           <div style={{ visibility: 'hidden', height: '56px' }}>{/* Spacer */}</div>
           
-          <section style={{ ...cardStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={formHeaderStyle}>
+          <section style={{ ...cardStyle, height: '700px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...formHeaderStyle, flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={cardTitleStyle}>Active Listings</h3>
                 <span style={countBadgeStyle}>{activeIntents.length} Live</span>
               </div>
               <p style={cardSubStyle}>Market trades available for fulfillment.</p>
             </div>
-            
-            <div style={{ ...listingsGridStyle, overflowY: 'auto', paddingRight: '4px' }}>
+
+            <div style={{ ...listingsGridStyle, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
               {activeIntents.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {activeIntents.map((intent, idx) => (
