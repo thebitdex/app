@@ -21,10 +21,35 @@ const BITDEX_ABI = [
 
 export default function Home() {
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
+  const { connectors, connect } = useConnect();
   const { disconnect } = useDisconnect();
 
-  // Tabs for the primary action area
+  // Header Connect Section
+  const renderConnect = () => {
+    if (isConnected) {
+      return (
+        <button onClick={() => disconnect()} style={walletButtonStyle}>
+          <Wallet size={18} /> {address?.slice(0, 6)}...{address?.slice(-4)}
+        </button>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {connectors.map((connector) => (
+          <button 
+            key={connector.uid} 
+            onClick={() => connect({ connector })} 
+            style={connectButtonStyle}
+          >
+            {connector.name === 'Injected' ? 'Connect Wallet' : connector.name}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  // UI State
   const [activeTab, setActiveTab] = useState<'create' | 'fulfill'>('create');
 
   // Price State
@@ -190,11 +215,7 @@ export default function Home() {
               <span>${btcPrice.toLocaleString()}</span>
             </div>
           )}
-          {isConnected ? (
-            <button onClick={() => disconnect()} style={walletButtonStyle}><Wallet size={18} /> {address?.slice(0, 6)}...{address?.slice(-4)}</button>
-          ) : (
-            <button onClick={() => connect({ connector: injected() })} style={connectButtonStyle}>Connect Wallet</button>
-          )}
+          {renderConnect()}
         </div>
       </header>
 
@@ -421,11 +442,11 @@ const tabsContainerStyle = { display: 'flex', gap: '8px', padding: '4px', backgr
 const tabStyle = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '10px', fontSize: '14px', fontWeight: '600', color: '#71717a', transition: 'all 0.2s' } as const;
 const activeTabStyle = { ...tabStyle, background: 'white', color: 'black', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' } as const;
 
-const cardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', minHeight: '650px' } as const;
-const formHeaderStyle = { marginBottom: '24px' } as const;
+const cardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', height: '700px', display: 'flex', flexDirection: 'column' } as const;
+const formHeaderStyle = { marginBottom: '24px', flexShrink: 0 } as const;
 const cardTitleStyle = { color: 'black', fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.02em' } as const;
 const cardSubStyle = { fontSize: '14px', color: '#71717a', margin: '4px 0 0 0' } as const;
-const formStyle = { display: 'flex', flexDirection: 'column', gap: '24px' } as const;
+const formStyle = { display: 'flex', flexDirection: 'column', gap: '24px', flex: 1, overflowY: 'auto' } as const;
 const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '10px' } as const;
 const labelStyle = { fontSize: '14px', fontWeight: '600', color: '#3f3f46' } as const;
 const inputWrapperStyle = { position: 'relative', display: 'flex', alignItems: 'center' } as const;
@@ -444,12 +465,12 @@ const inputStyle = {
 const inputSuffixStyle = { position: 'absolute', right: '16px', fontSize: '13px', fontWeight: '800', color: '#64748b' } as const;
 const subtextStyle = { fontSize: '12px', color: '#a1a1aa', margin: 0 } as const;
 const statusBoxStyle = { background: '#f8fafc', padding: '14px', borderRadius: '12px', fontSize: '14px', color: '#475569', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' } as const;
-const actionButtonStyle = (bg: string) => ({ background: bg, color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'transform 0.1s active' }) as const;
+const actionButtonStyle = (bg: string) => ({ background: bg, color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'transform 0.1s active', flexShrink: 0 }) as const;
 const successTextStyle = { fontSize: '14px', color: '#16a34a', fontWeight: '600', textAlign: 'center' as const, marginTop: '8px' } as const;
 
-const marketHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as const;
+const marketHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 } as const;
 const countBadgeStyle = { background: '#f4f4f5', padding: '4px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#71717a' } as const;
-const listingsGridStyle = { flex: 1, maxHeight: '480px' } as const;
+const listingsGridStyle = { flex: 1, overflowY: 'auto', paddingRight: '8px' } as const;
 const emptyMarketStyle = { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#a1a1aa', background: '#fafafa', borderRadius: '24px', border: '2px dashed #f1f1f1' } as const;
 
 const listingCardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '20px', padding: '20px', transition: 'transform 0.2s' } as const;
