@@ -10,7 +10,10 @@ export const hemiMainnet = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.hemi.network/rpc'],
+      http: ['https://rpc.hemi.network/rpc', 'https://hemi.drpc.org'],
+    },
+    public: {
+      http: ['https://rpc.hemi.network/rpc', 'https://hemi.drpc.org'],
     },
   },
   blockExplorers: {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAccount, useConnect, useDisconnect, useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts } from 'wagmi';
+import { useAccount, useConnect, useDisconnect, useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts, useChainId, useSwitchChain } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { parseUnits, formatUnits } from 'viem';
 import { hemiMainnet } from '@/lib/networks';
@@ -140,34 +140,52 @@ export default function Home() {
       .reverse(); // Newest first
   }, [intentData, fetchedIds]);
 
+  // Chain
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+
   // Isolated Write Hooks
-  const { writeContract: writeCreate, data: hashCreate, isPending: isPendingCreate } = useWriteContract();
-  const { writeContract: writeApprove, data: hashApprove, isPending: isPendingApprove } = useWriteContract();
+  const { writeContract: writeCreate, data: hashCreate, isPending: isPendingCreate, error: createError } = useWriteContract();
+  const { writeContract: writeApprove, data: hashApprove, isPending: isPendingApprove, error: approveError } = useWriteContract();
   const { isLoading: isWaitingApprove, isSuccess: isSuccessApprove } = useWaitForTransactionReceipt({ hash: hashApprove });
   const { isLoading: isWaitingCreate, isSuccess: isSuccessCreate } = useWaitForTransactionReceipt({ hash: hashCreate });
 
-  const { writeContract: writeFulfill, data: hashFulfill, isPending: isPendingFulfill } = useWriteContract();
+  const { writeContract: writeFulfill, data: hashFulfill, isPending: isPendingFulfill, error: fulfillError } = useWriteContract();
   const { isLoading: isWaitingFulfill, isSuccess: isSuccessFulfill } = useWaitForTransactionReceipt({ hash: hashFulfill });
 
   const [isCreateFlowActive, setIsCreateFlowActive] = useState(false);
   const [createStatus, setCreateStatus] = useState('');
 
+  const ensureHemi = async () => {
+    if (chainId !== hemiMainnet.id) {
+      await switchChainAsync({ chainId: hemiMainnet.id });
+    }
+  };
+
   const handleCreateIntent = async () => {
     if (!usdcAmount || !requiredBtc || !btcAddress) return;
-    setIsCreateFlowActive(true);
-    setCreateStatus('Requesting Approval...');
-    writeApprove({
-      address: USDC_ADDRESS,
-      abi: [{ name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }],
-      functionName: 'approve',
-      args: [BITDEX_ADDRESS, parseUnits(usdcAmount, 6)],
-    });
+    try {
+      await ensureHemi();
+      setIsCreateFlowActive(true);
+      setCreateStatus('Requesting Approval...');
+      writeApprove({
+        chainId: hemiMainnet.id,
+        address: USDC_ADDRESS,
+        abi: [{ name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }],
+        functionName: 'approve',
+        args: [BITDEX_ADDRESS, parseUnits(usdcAmount, 6)],
+      });
+    } catch (err) {
+      setIsCreateFlowActive(false);
+      setCreateStatus(`Error: ${(err as Error).message}`);
+    }
   };
 
   useEffect(() => {
     if (isSuccessApprove && isCreateFlowActive) {
       setCreateStatus('Approval Confirmed! Listing Order...');
       writeCreate({
+        chainId: hemiMainnet.id,
         address: BITDEX_ADDRESS,
         abi: BITDEX_ABI,
         functionName: 'createIntent',
@@ -176,14 +194,20 @@ export default function Home() {
     }
   }, [isSuccessApprove, isCreateFlowActive]);
 
-  const handleFulfillIntent = () => {
+  const handleFulfillIntent = async () => {
     if (!targetIntentId || !btcTxId) return;
-    writeFulfill({
-      address: BITDEX_ADDRESS,
-      abi: BITDEX_ABI,
-      functionName: 'fulfillIntent',
-      args: [targetIntentId as `0x${string}`, btcTxId as `0x${string}`],
-    });
+    try {
+      await ensureHemi();
+      writeFulfill({
+        chainId: hemiMainnet.id,
+        address: BITDEX_ADDRESS,
+        abi: BITDEX_ABI,
+        functionName: 'fulfillIntent',
+        args: [targetIntentId as `0x${string}`, btcTxId as `0x${string}`],
+      });
+    } catch (err) {
+      console.error('Fulfill failed:', err);
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -294,6 +318,12 @@ export default function Home() {
                     </div>
                   )}
 
+                  {(approveError || createError) && (
+                    <div style={{ ...statusBoxStyle, color: '#dc2626', background: '#fef2f2' }}>
+                      {(approveError || createError)?.message}
+                    </div>
+                  )}
+
                   <button 
                     onClick={handleCreateIntent}
                     disabled={isPendingApprove || isWaitingApprove || isPendingCreate || isWaitingCreate}
@@ -342,6 +372,11 @@ export default function Home() {
                   >
                     {isWaitingFulfill ? 'Verifying...' : 'Claim USDC'}
                   </button>
+                  {fulfillError && (
+                    <div style={{ ...statusBoxStyle, color: '#dc2626', background: '#fef2f2' }}>
+                      {fulfillError.message}
+                    </div>
+                  )}
                   {isSuccessFulfill && <p style={successTextStyle}>Swap Fulfilled! USDC Released.</p>}
                 </div>
               </>
