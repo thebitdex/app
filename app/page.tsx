@@ -8,8 +8,8 @@ import { hemiMainnet } from '@/lib/networks';
 import { Wallet, Bitcoin, ArrowRightLeft, ShieldCheck, History, Coins, RefreshCw, LayoutGrid, ShoppingCart, PlusCircle, ExternalLink, Clock, Copy } from 'lucide-react';
 
 // Mainnet Addresses
-const BITDEX_ADDRESS = '0x98c039CB514e5beFBBd0EE4F70E595597186ba27'; 
-const USDC_ADDRESS = '0xad11a8beb98bbf61dbb1aa0f6d6f2ecd87b35afa'; 
+const BITDEX_ADDRESS = '0x98c039CB514e5beFBBd0EE4F70E595597186ba27' as `0x${string}`; 
+const USDC_ADDRESS = '0xad11a8beb98bbf61dbb1aa0f6d6f2ecd87b35afa' as `0x${string}`; 
 
 const BITDEX_ABI = [
   { name: 'intentCounter', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'uint256' }] },
@@ -39,6 +39,9 @@ export default function Home() {
   // Taker Form State
   const [targetIntentId, setTargetIntentId] = useState('');
   const [btcTxId, setBtcTxId] = useState('');
+
+  // Input Focus State
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   // Fetch BTC Price
   const fetchPrice = async () => {
@@ -96,15 +99,19 @@ export default function Home() {
   const activeIntents = useMemo(() => {
     if (!intentData || !fetchedIds) return [];
     return intentData
-      .map((res, i) => ({ 
-        id: fetchedIds[i], 
-        maker: res.result?.[0] as string,
-        usdcAmount: res.result?.[1] as bigint,
-        requiredBtc: res.result?.[2] as bigint,
-        makerBtcAddress: res.result?.[3] as string,
-        isActive: res.result?.[5] as boolean
-      }))
-      .filter(intent => intent.isActive)
+      .map((res, i) => {
+        const result = res.result as any;
+        if (!result) return null;
+        return { 
+          id: fetchedIds[i], 
+          maker: result[0] as string,
+          usdcAmount: result[1] as bigint,
+          requiredBtc: result[2] as bigint,
+          makerBtcAddress: result[3] as string,
+          isActive: result[5] as boolean
+        };
+      })
+      .filter((intent): intent is NonNullable<typeof intent> => !!intent && intent.isActive)
       .reverse(); // Newest first
   }, [intentData, fetchedIds]);
 
@@ -159,8 +166,6 @@ export default function Home() {
     alert('ID Copied!');
   };
 
-  // Input Focus State
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const getInputStyle = (id: string) => ({
     ...inputStyle,
     borderColor: focusedInput === id ? '#2563eb' : '#f1f5f9',
@@ -175,7 +180,7 @@ export default function Home() {
           <div style={logoIconStyle}><ArrowRightLeft size={32} /></div>
           <div>
             <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>BitDEX</h1>
-            <p style={{ fontSize: '14px', color: 'white', margin: 0 }}>Native Bitcoin swaps on Hemi</p>
+            <p style={{ fontSize: '14px', color: '#71717a', margin: 0 }}>Native Bitcoin Swaps on Hemi</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -214,7 +219,7 @@ export default function Home() {
             {activeTab === 'create' ? (
               <>
                 <div style={formHeaderStyle}>
-                  <h3 style={cardTitleStyle}>Create Intent</h3>
+                  <h3 style={cardTitleStyle}>New Listing</h3>
                   <p style={cardSubStyle}>Deposit USDC to request native Bitcoin.</p>
                 </div>
                 <div style={formStyle}>
@@ -325,7 +330,7 @@ export default function Home() {
 
         {/* Right Column: Marketplace */}
         <div style={rightColStyle}>
-          <div style={{ visibility: 'hidden', height: '56px' }}>{/* Spacer to align with left tabs */}</div>
+          <div style={{ visibility: 'hidden', height: '56px' }}>{/* Spacer */}</div>
           
           <section style={{ ...cardStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={formHeaderStyle}>
@@ -361,7 +366,6 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
-
                       <div style={listingFooterStyle}>
                         <span style={listingIdStyle}>ID: {intent.id?.slice(0,12)}...</span>
                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -402,29 +406,29 @@ export default function Home() {
 }
 
 // Styles
-const mainContainerStyle = { maxWidth: '1200px', margin: '0 auto', padding: '40px 24px', minHeight: '100vh', display: 'flex', flexDirection: 'column' as const };
-const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' };
-const logoIconStyle = { background: '#ff9900', color: 'white', padding: '10px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(255,153,0,0.2)' };
-const priceBadgeStyle = { background: '#fff7ed', border: '1px solid #ffedd5', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '8px' };
-const walletButtonStyle = { background: '#fff', border: '1px solid #e4e4e7', padding: '10px 18px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: 'black'};
-const connectButtonStyle = { background: 'black', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '600' };
+const mainContainerStyle = { maxWidth: '1200px', margin: '0 auto', padding: '40px 24px', minHeight: '100vh', display: 'flex', flexDirection: 'column' } as const;
+const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' } as const;
+const logoIconStyle = { background: '#ff9900', color: 'white', padding: '10px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(255,153,0,0.2)' } as const;
+const priceBadgeStyle = { background: '#fff7ed', border: '1px solid #ffedd5', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '8px' } as const;
+const walletButtonStyle = { background: '#fff', border: '1px solid #e4e4e7', padding: '10px 18px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' } as const;
+const connectButtonStyle = { background: 'black', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '600' } as const;
 
-const contentGridStyle = { display: 'grid', gridTemplateColumns: '400px 1fr', gap: '40px', flex: 1 };
-const leftColStyle = { display: 'flex', flexDirection: 'column' as const, gap: '24px' };
-const rightColStyle = { display: 'flex', flexDirection: 'column' as const, gap: '24px' };
+const contentGridStyle = { display: 'grid', gridTemplateColumns: '400px 1fr', gap: '40px', flex: 1 } as const;
+const leftColStyle = { display: 'flex', flexDirection: 'column', gap: '24px' } as const;
+const rightColStyle = { display: 'flex', flexDirection: 'column', gap: '24px' } as const;
 
-const tabsContainerStyle = { display: 'flex', gap: '8px', padding: '4px', background: '#f4f4f5', borderRadius: '14px' };
-const tabStyle = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '10px', fontSize: '14px', fontWeight: '600', color: '#71717a', transition: 'all 0.2s' };
-const activeTabStyle = { ...tabStyle, background: 'white', color: 'black', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' };
+const tabsContainerStyle = { display: 'flex', gap: '8px', padding: '4px', background: '#f4f4f5', borderRadius: '14px' } as const;
+const tabStyle = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '10px', fontSize: '14px', fontWeight: '600', color: '#71717a', transition: 'all 0.2s' } as const;
+const activeTabStyle = { ...tabStyle, background: 'white', color: 'black', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' } as const;
 
-const cardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', minHeight: '550px' };
-const formHeaderStyle = { marginBottom: '24px' };
-const cardTitleStyle = { color: 'black', fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.02em' };
-const cardSubStyle = { fontSize: '14px', color: '#71717a', margin: '4px 0 0 0' };
-const formStyle = { display: 'flex', flexDirection: 'column', gap: '24px' };
-const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '10px' };
-const labelStyle = { fontSize: '14px', fontWeight: '600', color: '#3f3f46' };
-const inputWrapperStyle = { position: 'relative' as const, display: 'flex', alignItems: 'center' };
+const cardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', minHeight: '650px' } as const;
+const formHeaderStyle = { marginBottom: '24px' } as const;
+const cardTitleStyle = { color: 'black', fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.02em' } as const;
+const cardSubStyle = { fontSize: '14px', color: '#71717a', margin: '4px 0 0 0' } as const;
+const formStyle = { display: 'flex', flexDirection: 'column', gap: '24px' } as const;
+const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '10px' } as const;
+const labelStyle = { fontSize: '14px', fontWeight: '600', color: '#3f3f46' } as const;
+const inputWrapperStyle = { position: 'relative', display: 'flex', alignItems: 'center' } as const;
 const inputStyle = { 
   width: '100%', 
   padding: '14px 16px', 
@@ -436,34 +440,34 @@ const inputStyle = {
   outline: 'none', 
   transition: 'all 0.2s',
   fontWeight: '500'
-};
-const inputSuffixStyle = { position: 'absolute' as const, right: '16px', fontSize: '13px', fontWeight: '800', color: '#64748b' };
-const subtextStyle = { fontSize: '12px', color: '#a1a1aa', margin: 0 };
-const statusBoxStyle = { background: '#f8fafc', padding: '14px', borderRadius: '12px', fontSize: '14px', color: '#475569', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' };
-const actionButtonStyle = (bg: string) => ({ background: bg, color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'transform 0.1s active' });
-const successTextStyle = { fontSize: '14px', color: '#16a34a', fontWeight: '600', textAlign: 'center' as const, marginTop: '8px' };
+} as const;
+const inputSuffixStyle = { position: 'absolute', right: '16px', fontSize: '13px', fontWeight: '800', color: '#64748b' } as const;
+const subtextStyle = { fontSize: '12px', color: '#a1a1aa', margin: 0 } as const;
+const statusBoxStyle = { background: '#f8fafc', padding: '14px', borderRadius: '12px', fontSize: '14px', color: '#475569', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' } as const;
+const actionButtonStyle = (bg: string) => ({ background: bg, color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'transform 0.1s active' }) as const;
+const successTextStyle = { fontSize: '14px', color: '#16a34a', fontWeight: '600', textAlign: 'center' as const, marginTop: '8px' } as const;
 
-const marketHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
-const countBadgeStyle = { background: '#f4f4f5', padding: '4px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#71717a' };
-const listingsGridStyle = { flex: 1, maxHeight: '480px' };
-const emptyMarketStyle = { height: '100%', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', color: '#a1a1aa', background: '#fafafa', borderRadius: '24px', border: '2px dashed #f1f1f1' };
+const marketHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as const;
+const countBadgeStyle = { background: '#f4f4f5', padding: '4px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#71717a' } as const;
+const listingsGridStyle = { flex: 1, maxHeight: '480px' } as const;
+const emptyMarketStyle = { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#a1a1aa', background: '#fafafa', borderRadius: '24px', border: '2px dashed #f1f1f1' } as const;
 
-const listingCardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '20px', padding: '20px', transition: 'transform 0.2s' };
-const listingHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f4f4f5', paddingBottom: '16px' };
-const listingAmountStyle = { fontSize: '18px', fontWeight: '800', color: '#1a1a1a' };
-const listingBtcStyle = { fontSize: '16px', fontWeight: '700', color: '#ff9900' };
-const listingBodyStyle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' };
-const listingDetailStyle = { display: 'flex', flexDirection: 'column' as const, gap: '4px' };
-const listingLabelStyle = { fontSize: '11px', fontWeight: '700', color: '#a1a1aa', textTransform: 'uppercase' as const };
-const listingValueStyle = { fontSize: '13px', fontWeight: '600', color: '#4b5563', fontFamily: 'monospace' };
-const listingFooterStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb', padding: '10px 16px', borderRadius: '12px' };
-const listingIdStyle = { fontSize: '11px', color: '#9ca3af', fontFamily: 'monospace' };
-const listingActionButtonStyle = { background: '#2563eb', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' };
-const listingIconButtonStyle = { background: '#f3f4f6', border: 'none', color: '#6b7280', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const listingSmallIconButtonStyle = { background: 'none', border: 'none', color: '#94a3b8', padding: '2px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.2s' };
+const listingCardStyle = { background: 'white', border: '1px solid #e4e4e7', borderRadius: '20px', padding: '20px', transition: 'transform 0.2s' } as const;
+const listingHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f4f4f5', paddingBottom: '16px' } as const;
+const listingAmountStyle = { fontSize: '18px', fontWeight: '800', color: '#1a1a1a' } as const;
+const listingBtcStyle = { fontSize: '16px', fontWeight: '700', color: '#ff9900' } as const;
+const listingBodyStyle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' } as const;
+const listingDetailStyle = { display: 'flex', flexDirection: 'column', gap: '4px' } as const;
+const listingLabelStyle = { fontSize: '11px', fontWeight: '700', color: '#a1a1aa', textTransform: 'uppercase' } as const;
+const listingValueStyle = { fontSize: '13px', fontWeight: '600', color: '#4b5563', fontFamily: 'monospace' } as const;
+const listingFooterStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb', padding: '10px 16px', borderRadius: '12px' } as const;
+const listingIdStyle = { fontSize: '11px', color: '#9ca3af', fontFamily: 'monospace' } as const;
+const listingActionButtonStyle = { background: '#2563eb', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' } as const;
+const listingIconButtonStyle = { background: '#f3f4f6', border: 'none', color: '#6b7280', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as const;
+const listingSmallIconButtonStyle = { background: 'none', border: 'none', color: '#94a3b8', padding: '2px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.2s' } as const;
 
-const footerStyle = { marginTop: '80px', paddingTop: '40px', borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', color: '#a1a1aa', fontSize: '13px' };
-const footerLinkStyle = { color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' };
+const footerStyle = { marginTop: '80px', paddingTop: '40px', borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', color: '#a1a1aa', fontSize: '13px' } as const;
+const footerLinkStyle = { color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' } as const;
 const betaWarningStyle = { 
   background: '#fef2f2', 
   border: '1px solid #fecaca', 
@@ -476,4 +480,4 @@ const betaWarningStyle = {
   alignItems: 'center', 
   gap: '12px',
   lineHeight: '1.5'
-};
+} as const;
