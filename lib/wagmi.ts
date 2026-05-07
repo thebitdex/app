@@ -10,7 +10,7 @@ export const config = createConfig({
     coinbaseWallet({ appName: 'BitDEX' }),
   ],
   transports: {
-    [hemiMainnet.id]: http('https://hemi.drpc.org'),
+    [hemiMainnet.id]: http('https://rpc.hemi.network/rpc'),
   },
 });
 
